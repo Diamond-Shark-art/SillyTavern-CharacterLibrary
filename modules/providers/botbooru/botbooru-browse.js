@@ -12,6 +12,7 @@ import {
     formatNumber,
     getCharacterPageUrl,
     getPreviewImageUrl,
+    isCloudflareBlockError,
     isExplicitPost,
     loginBotbooru,
     parseCharacterUrl,
@@ -155,7 +156,21 @@ async function loadBotbooruPosts({ reset = false } = {}) {
         renderBotbooruGrid();
     } catch (err) {
         console.error('[Botbooru] load failed:', err);
-        if (grid) grid.innerHTML = `<div class="browse-error">Failed to load Botbooru: ${escapeHtml(err.message || 'Unknown error')}</div>`;
+        if (grid) {
+            const blocked = isCloudflareBlockError(err);
+            grid.innerHTML = blocked
+                ? `<div class="browse-error botbooru-blocked">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <div>
+                        <strong>Botbooru is blocking extension requests.</strong>
+                        <p>${escapeHtml(err.message)}</p>
+                        <a class="action-btn secondary" href="https://botbooru.com/" target="_blank" rel="noopener">
+                            <i class="fa-solid fa-up-right-from-square"></i> Open Botbooru
+                        </a>
+                    </div>
+                </div>`
+                : `<div class="browse-error">Failed to load Botbooru: ${escapeHtml(err.message || 'Unknown error')}</div>`;
+        }
     } finally {
         botbooruLoading = false;
     }
@@ -390,7 +405,11 @@ class BotbooruBrowseView extends BrowseView {
                 updateAuthUi();
                 loadBotbooruPosts({ reset: true });
             } catch (err) {
-                if (status) status.textContent = err.message || 'Login failed.';
+                if (status) {
+                    status.textContent = isCloudflareBlockError(err)
+                        ? 'Botbooru is blocking extension login requests with Cloudflare. This is not a wrong password.'
+                        : (err.message || 'Login failed.');
+                }
             }
         });
 
