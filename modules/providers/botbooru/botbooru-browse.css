@@ -1,0 +1,47 @@
+.botbooru-section {
+    width: 100%;
+}
+
+.botbooru-auth-status {
+    margin: 8px 0 12px;
+    color: var(--text-secondary);
+    font-size: var(--font-sm);
+}
+
+.botbooru-login-modal {
+    width: min(440px, 92vw);
+    max-height: 90vh;
+    overflow: auto;
+    background: var(--modal-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+}
+
+.botbooru-login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 18px;
+}
+
+.botbooru-login-form label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    color: var(--text-secondary);
+    font-size: var(--font-sm);
+    font-weight: 600;
+}
+
+.botbooru-login-status {
+    min-height: 18px;
+    color: var(--text-secondary);
+    font-size: var(--font-sm);
+}
+
+.botbooru-login-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
