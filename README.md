@@ -433,16 +433,16 @@ Providers with Following support include a **Followed Creators Manager** panel f
 
 ### Provider Feature Matrix
 
-| Feature | ChubAI | JanitorAI | CharacterTavern | Pygmalion | Wyvern | DataCat |
-|---------|--------|-----------|-----------------|-----------|--------|----------|
-| Browse & Search | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Card Updates | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Character Linking | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Gallery Downloads | ✅ | -- | -- | ✅ | ✅ | -- |
-| Remote Version History | ✅ | -- | -- | -- | -- | -- |
-| Following / Timeline | ✅ | -- | -- | ✅ | ✅ | ✅ |
-| Favorites | ✅ | -- | -- | -- | -- | -- |
-| Auth Required | Optional | None | Optional | Optional | Optional | None |
+| Feature | ChubAI | JanitorAI | CharacterTavern | Pygmalion | Wyvern | DataCat | Botbooru |
+|---------|--------|-----------|-----------------|-----------|--------|---------|----------|
+| Browse & Search | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Card Updates | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Character Linking | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Gallery Downloads | ✅ | -- | -- | ✅ | ✅ | -- | -- |
+| Remote Version History | ✅ | -- | -- | -- | -- | -- | -- |
+| Following / Timeline | ✅ | -- | -- | ✅ | ✅ | ✅ | -- |
+| Favorites | ✅ | -- | -- | -- | -- | -- | -- |
+| Auth Required | Optional | None | Optional | Optional | Optional | None | Optional |
 
 <details>
 <summary><h3>ChubAI</h3></summary>
@@ -507,6 +507,28 @@ CharacterTavern requires a session cookie for NSFW content. To set it up:
 3. Open DevTools (F12) → **Application** tab → **Cookies** → `character-tavern.com`
 4. Copy the `session` cookie value
 5. Paste it in the login modal (appears when you enable NSFW) or in Settings
+
+</details>
+
+<details>
+<summary><h3>Botbooru</h3></summary>
+
+**Auth:** Optional username/password login. No plugin required.
+
+- Browse and search the Botbooru catalog
+- Sort by latest, randomized, favorited, viewed, downloaded, or curated
+- In-app character preview with Botbooru stats and tags
+- One-click import via Botbooru's PNG/JSON download endpoints
+- Character linking and card updates through `extensions.botbooru`
+
+#### With Authentication
+- Enable the NSFW toggle to browse content visible to your Botbooru account
+- Import login-gated Botbooru characters when your account can access them
+
+#### Login
+1. Open the Botbooru provider in the Online tab
+2. Click **Login**
+3. Enter your Botbooru username and password
 
 </details>
 
@@ -635,6 +657,7 @@ Type these prefixes in the search bar for targeted filtering:
 | `pygmalion:` | `pygmalion:yes` or `pygmalion:no` | Pygmalion link specifically |
 | `wyvern:` | `wyvern:yes` or `wyvern:no` | Wyvern link specifically |
 | `datacat:` | `datacat:yes` or `datacat:no` | DataCat link specifically (also `dc:`) |
+| `botbooru:` | `botbooru:yes` or `botbooru:no` | Botbooru link specifically |
 | `version:` | `version:1.0` | Match character version string |
 | `gallery:` | `gallery:aB3x` or `gallery:none` | Match gallery ID (or `none` for unassigned) |
 | `uid:` | `uid:abc123` or `uid:none` | Match version UID (or `none` for unassigned) |
