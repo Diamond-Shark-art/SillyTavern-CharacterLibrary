@@ -1,11 +1,12 @@
 // Botbooru API utilities - shared by the Botbooru provider and browse view.
 
-import { fetchWithProxy, formatNumber, slugify, stripHtml } from '../provider-utils.js';
+import { formatNumber, slugify, stripHtml } from '../provider-utils.js';
 
-export { fetchWithProxy, formatNumber, slugify, stripHtml };
+export { formatNumber, slugify, stripHtml };
 
 export const BOTBOORU_SITE_BASE = 'https://botbooru.com';
 export const BOTBOORU_PAGE_SIZE = 24;
+export const BOTBOORU_CLOUDFLARE_MESSAGE = 'Botbooru is currently blocking SillyTavern extension requests with Cloudflare. This is not a bad username or password. Open Botbooru in your browser for now, or ask Botbooru to allow API/CORS access for SillyTavern.';
 
 export const BOTBOORU_SORT_OPTIONS = {
     latest: 'Latest',
@@ -38,6 +39,66 @@ function authHeaders(token, extra = {}) {
     const headers = { Accept: 'application/json', ...extra };
     if (token) headers.Authorization = `Bearer ${token}`;
     return headers;
+}
+
+function makeBotbooruError(message, code) {
+    const error = new Error(message);
+    error.code = code;
+    return error;
+}
+
+export function isCloudflareBlockError(error) {
+    return error?.code === 'BOTBOORU_CLOUDFLARE'
+        || /cloudflare/i.test(error?.message || '')
+        || /just a moment/i.test(error?.message || '');
+}
+
+async function validateBotbooruResponse(response) {
+    if (response.ok) return response;
+
+    const text = await response.text().catch(() => '');
+    const isCloudflare = response.status === 403 && (
+        response.headers?.get?.('cf-mitigated') === 'challenge'
+        || /Just a moment/i.test(text)
+        || /__cf_chl/i.test(text)
+    );
+
+    if (isCloudflare) {
+        throw makeBotbooruError(BOTBOORU_CLOUDFLARE_MESSAGE, 'BOTBOORU_CLOUDFLARE');
+    }
+    if (response.status === 404 && text.includes('CORS proxy is disabled')) {
+        throw makeBotbooruError('CORS proxy is disabled in SillyTavern settings.', 'BOTBOORU_PROXY_DISABLED');
+    }
+    throw makeBotbooruError(`Botbooru HTTP ${response.status}`, 'BOTBOORU_HTTP');
+}
+
+async function fetchBotbooru(url, opts = {}) {
+    try {
+        const response = await fetch(url, {
+            credentials: 'include',
+            ...opts,
+        });
+        return await validateBotbooruResponse(response);
+    } catch (error) {
+        if (error?.code) throw error;
+        // Cross-origin browser fetches usually fail before JS can read the response.
+        // Fall back to SillyTavern's proxy, where we can surface a useful error.
+    }
+
+    const response = await fetch(`/proxy/${encodeURIComponent(url)}`, opts);
+    return validateBotbooruResponse(response);
+}
+
+async function readBotbooruJson(response) {
+    const text = await response.text();
+    if (/Just a moment/i.test(text) || /__cf_chl/i.test(text)) {
+        throw makeBotbooruError(BOTBOORU_CLOUDFLARE_MESSAGE, 'BOTBOORU_CLOUDFLARE');
+    }
+    try {
+        return JSON.parse(text);
+    } catch {
+        throw makeBotbooruError('Botbooru returned a non-JSON response.', 'BOTBOORU_NON_JSON');
+    }
 }
 
 export function normalizePostId(value) {
@@ -101,7 +162,7 @@ export function isExplicitPost(post) {
 
 export async function loginBotbooru(username, password) {
     const body = new URLSearchParams({ username, password });
-    const response = await fetchWithProxy(`${BOTBOORU_SITE_BASE}/auth/token`, {
+    const response = await fetchBotbooru(`${BOTBOORU_SITE_BASE}/auth/token`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
@@ -109,17 +170,17 @@ export async function loginBotbooru(username, password) {
         },
         body,
     });
-    const data = await response.json();
+    const data = await readBotbooruJson(response);
     if (!data?.access_token) throw new Error('Botbooru did not return an access token');
     return data;
 }
 
 export async function fetchCurrentUser(token) {
     if (!token) return null;
-    const response = await fetchWithProxy(`${BOTBOORU_SITE_BASE}/auth/me`, {
+    const response = await fetchBotbooru(`${BOTBOORU_SITE_BASE}/auth/me`, {
         headers: authHeaders(token),
     });
-    return response.json();
+    return readBotbooruJson(response);
 }
 
 export async function searchPosts(opts = {}) {
@@ -148,30 +209,30 @@ export async function searchPosts(opts = {}) {
     }
     if (hideAi) params.hide_ai = 'true';
 
-    const response = await fetchWithProxy(makeUrl('/posts/', params), {
+    const response = await fetchBotbooru(makeUrl('/posts/', params), {
         headers: authHeaders(token),
     });
-    return response.json();
+    return readBotbooruJson(response);
 }
 
 export async function fetchPost(postId, token) {
     const id = normalizePostId(postId);
     if (!id) throw new Error('Invalid Botbooru post id');
-    const response = await fetchWithProxy(`${BOTBOORU_SITE_BASE}/post/${encodeURIComponent(id)}`, {
+    const response = await fetchBotbooru(`${BOTBOORU_SITE_BASE}/post/${encodeURIComponent(id)}`, {
         headers: authHeaders(token),
     });
-    return response.json();
+    return readBotbooruJson(response);
 }
 
 export async function fetchCardJson(postId, token, tagSource = 'original') {
-    const response = await fetchWithProxy(getDownloadJsonUrl(postId, tagSource), {
+    const response = await fetchBotbooru(getDownloadJsonUrl(postId, tagSource), {
         headers: authHeaders(token),
     });
-    return response.json();
+    return readBotbooruJson(response);
 }
 
 export async function fetchCardPngBuffer(postId, token, tagSource = 'original') {
-    const response = await fetchWithProxy(getDownloadPngUrl(postId, tagSource), {
+    const response = await fetchBotbooru(getDownloadPngUrl(postId, tagSource), {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
     return response.arrayBuffer();
