@@ -513,7 +513,7 @@ CharacterTavern requires a session cookie for NSFW content. To set it up:
 <details>
 <summary><h3>Botbooru</h3></summary>
 
-**Auth:** Optional username/password login. No plugin required.
+**Auth:** Optional token paste from Botbooru local storage. No plugin required.
 
 - Browse and search the Botbooru catalog
 - Sort by latest, randomized, favorited, viewed, downloaded, or curated
@@ -525,10 +525,11 @@ CharacterTavern requires a session cookie for NSFW content. To set it up:
 - Enable the NSFW toggle to browse content visible to your Botbooru account
 - Import login-gated Botbooru characters when your account can access them
 
-#### Login
-1. Open the Botbooru provider in the Online tab
-2. Click **Login**
-3. Enter your Botbooru username and password
+#### Authentication
+1. Log in on Botbooru in a normal browser tab
+2. Copy the `token` value from Botbooru local storage
+3. Open the Botbooru provider in the Online tab
+4. Click **Token** and paste it
 
 </details>
 

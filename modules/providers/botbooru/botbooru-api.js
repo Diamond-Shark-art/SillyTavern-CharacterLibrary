@@ -160,21 +160,6 @@ export function isExplicitPost(post) {
     });
 }
 
-export async function loginBotbooru(username, password) {
-    const body = new URLSearchParams({ username, password });
-    const response = await fetchBotbooru(`${BOTBOORU_SITE_BASE}/auth/token`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            Accept: 'application/json',
-        },
-        body,
-    });
-    const data = await readBotbooruJson(response);
-    if (!data?.access_token) throw new Error('Botbooru did not return an access token');
-    return data;
-}
-
 export async function fetchCurrentUser(token) {
     if (!token) return null;
     const response = await fetchBotbooru(`${BOTBOORU_SITE_BASE}/auth/me`, {

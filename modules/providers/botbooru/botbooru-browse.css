@@ -40,6 +40,16 @@
     font-size: var(--font-sm);
 }
 
+.botbooru-login-help {
+    color: var(--text-secondary);
+    font-size: var(--font-sm);
+}
+
+.botbooru-login-help code {
+    font-family: inherit;
+    font-weight: 700;
+}
+
 .botbooru-login-actions {
     display: flex;
     gap: 10px;

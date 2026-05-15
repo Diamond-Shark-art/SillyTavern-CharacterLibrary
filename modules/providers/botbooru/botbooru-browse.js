@@ -14,7 +14,6 @@ import {
     getPreviewImageUrl,
     isCloudflareBlockError,
     isExplicitPost,
-    loginBotbooru,
     parseCharacterUrl,
     parsePostTags,
     searchPosts,
@@ -391,24 +390,22 @@ class BotbooruBrowseView extends BrowseView {
         on('botbooruLoginForm', 'submit', async e => {
             e.preventDefault();
             const status = document.getElementById('botbooruLoginStatus');
-            const username = document.getElementById('botbooruUsername')?.value?.trim();
-            const password = document.getElementById('botbooruPassword')?.value || '';
-            if (!username || !password) return;
-            if (status) status.textContent = 'Logging in...';
+            const pastedToken = document.getElementById('botbooruTokenInput')?.value?.trim();
+            if (!pastedToken) return;
+            if (status) status.textContent = 'Checking token...';
             try {
-                const data = await loginBotbooru(username, password);
-                setSetting('botbooruToken', data.access_token);
-                botbooruUser = await fetchCurrentUser(data.access_token).catch(() => ({ username }));
-                if (status) status.textContent = 'Login successful.';
-                withEl('botbooruPassword', el => { el.value = ''; });
+                botbooruUser = await fetchCurrentUser(pastedToken);
+                setSetting('botbooruToken', pastedToken);
+                if (status) status.textContent = 'Token accepted.';
+                withEl('botbooruTokenInput', el => { el.value = ''; });
                 document.getElementById('botbooruLoginModal')?.classList.add('hidden');
                 updateAuthUi();
                 loadBotbooruPosts({ reset: true });
             } catch (err) {
                 if (status) {
                     status.textContent = isCloudflareBlockError(err)
-                        ? 'Botbooru is blocking extension login requests with Cloudflare. This is not a wrong password.'
-                        : (err.message || 'Login failed.');
+                        ? 'Botbooru is blocking token checks right now. Try again later.'
+                        : 'Token rejected. Copy the value named "token" from Botbooru local storage.';
                 }
             }
         });
@@ -462,7 +459,7 @@ class BotbooruBrowseView extends BrowseView {
                 <i class="fa-solid fa-eye"></i> <span>NSFW</span>
             </button>
             <button id="botbooruLoginBtn" class="glass-btn" title="Login to Botbooru">
-                <i class="fa-solid fa-right-to-bracket"></i> <span>Login</span>
+                <i class="fa-solid fa-key"></i> <span>Token</span>
             </button>
             <button id="botbooruRefreshBtn" class="glass-btn icon-only" title="Refresh">
                 <i class="fa-solid fa-sync"></i>
@@ -527,19 +524,17 @@ class BotbooruBrowseView extends BrowseView {
             <div id="botbooruLoginModal" class="modal-overlay hidden">
                 <div class="botbooru-login-modal">
                     <div class="modal-header">
-                        <h3><i class="fa-solid fa-right-to-bracket"></i> Botbooru Login</h3>
+                        <h3><i class="fa-solid fa-key"></i> Botbooru Token</h3>
                         <button id="botbooruLoginClose" class="close-btn">&times;</button>
                     </div>
                     <form id="botbooruLoginForm" class="botbooru-login-form">
-                        <label>Username
-                            <input id="botbooruUsername" type="text" autocomplete="username" class="glass-input">
+                        <label>Token
+                            <input id="botbooruTokenInput" type="password" autocomplete="off" class="glass-input">
                         </label>
-                        <label>Password
-                            <input id="botbooruPassword" type="password" autocomplete="current-password" class="glass-input">
-                        </label>
+                        <div class="botbooru-login-help">Paste the value named <code>token</code> from Botbooru local storage.</div>
                         <div id="botbooruLoginStatus" class="botbooru-login-status"></div>
                         <div class="botbooru-login-actions">
-                            <button type="submit" class="action-btn primary"><i class="fa-solid fa-right-to-bracket"></i> Login</button>
+                            <button type="submit" class="action-btn primary"><i class="fa-solid fa-key"></i> Save token</button>
                             <button type="button" id="botbooruLogoutBtn" class="action-btn secondary"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
                         </div>
                     </form>

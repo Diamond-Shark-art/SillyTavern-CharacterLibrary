@@ -207,7 +207,7 @@ class BotbooruProvider extends ProviderBase {
                 label: 'Botbooru Token',
                 type: 'password',
                 defaultValue: null,
-                hint: 'Stored after logging in from the Botbooru provider.',
+                hint: 'Paste a token from Botbooru local storage in the Botbooru provider.',
                 section: 'Authentication',
             },
         ];
