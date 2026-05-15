@@ -69,26 +69,10 @@ async function validateBotbooruResponse(response) {
     if (response.status === 404 && text.includes('CORS proxy is disabled')) {
         throw makeBotbooruError('CORS proxy is disabled in SillyTavern settings.', 'BOTBOORU_PROXY_DISABLED');
     }
-    try {
-        const data = JSON.parse(text);
-        const detail = Array.isArray(data?.detail)
-            ? data.detail.map(item => item?.msg).filter(Boolean).join('; ')
-            : data?.detail;
-        if (detail) {
-            throw makeBotbooruError(`Botbooru HTTP ${response.status}: ${detail}`, 'BOTBOORU_HTTP');
-        }
-    } catch (error) {
-        if (error?.code) throw error;
-    }
     throw makeBotbooruError(`Botbooru HTTP ${response.status}`, 'BOTBOORU_HTTP');
 }
 
-async function fetchBotbooru(url, opts = {}, { proxyFirst = false } = {}) {
-    if (proxyFirst) {
-        const response = await fetch(`/proxy/${encodeURIComponent(url)}`, opts);
-        return validateBotbooruResponse(response);
-    }
-
+async function fetchBotbooru(url, opts = {}) {
     try {
         const response = await fetch(url, {
             credentials: 'include',
@@ -177,7 +161,7 @@ export function isExplicitPost(post) {
 }
 
 export async function loginBotbooru(username, password) {
-    const body = new URLSearchParams({ username, password }).toString();
+    const body = new URLSearchParams({ username, password });
     const response = await fetchBotbooru(`${BOTBOORU_SITE_BASE}/auth/token`, {
         method: 'POST',
         headers: {
@@ -185,7 +169,7 @@ export async function loginBotbooru(username, password) {
             Accept: 'application/json',
         },
         body,
-    }, { proxyFirst: true });
+    });
     const data = await readBotbooruJson(response);
     if (!data?.access_token) throw new Error('Botbooru did not return an access token');
     return data;
