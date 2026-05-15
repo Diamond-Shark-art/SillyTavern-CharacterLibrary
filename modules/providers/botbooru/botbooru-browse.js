@@ -12,6 +12,7 @@ import {
     formatNumber,
     getCharacterPageUrl,
     getPreviewImageUrl,
+    isBrowserAccessError,
     isCloudflareBlockError,
     isExplicitPost,
     parseCharacterUrl,
@@ -157,6 +158,7 @@ async function loadBotbooruPosts({ reset = false } = {}) {
         console.error('[Botbooru] load failed:', err);
         if (grid) {
             const blocked = isCloudflareBlockError(err);
+            const browserBlocked = isBrowserAccessError(err);
             grid.innerHTML = blocked
                 ? `<div class="browse-error botbooru-blocked">
                     <i class="fa-solid fa-shield-halved"></i>
@@ -168,6 +170,17 @@ async function loadBotbooruPosts({ reset = false } = {}) {
                         </a>
                     </div>
                 </div>`
+                : browserBlocked
+                    ? `<div class="browse-error botbooru-blocked">
+                        <i class="fa-solid fa-link-slash"></i>
+                        <div>
+                            <strong>Botbooru cannot be read from this browser page.</strong>
+                            <p>${escapeHtml(err.message)}</p>
+                            <a class="action-btn secondary" href="https://botbooru.com/" target="_blank" rel="noopener">
+                                <i class="fa-solid fa-up-right-from-square"></i> Open Botbooru
+                            </a>
+                        </div>
+                    </div>`
                 : `<div class="browse-error">Failed to load Botbooru: ${escapeHtml(err.message || 'Unknown error')}</div>`;
         }
     } finally {
@@ -405,6 +418,8 @@ class BotbooruBrowseView extends BrowseView {
                 if (status) {
                     status.textContent = isCloudflareBlockError(err)
                         ? 'Botbooru is blocking token checks right now. Try again later.'
+                        : isBrowserAccessError(err)
+                            ? 'This browser page cannot read Botbooru token checks directly.'
                         : 'Token rejected. Copy the value named "token" from Botbooru local storage.';
                 }
             }

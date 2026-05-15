@@ -7,6 +7,7 @@ export { formatNumber, slugify, stripHtml };
 export const BOTBOORU_SITE_BASE = 'https://botbooru.com';
 export const BOTBOORU_PAGE_SIZE = 24;
 export const BOTBOORU_CLOUDFLARE_MESSAGE = 'Botbooru is currently blocking SillyTavern extension requests with Cloudflare. This is not a bad username or password. Open Botbooru in your browser for now, or ask Botbooru to allow API/CORS access for SillyTavern.';
+export const BOTBOORU_BROWSER_ACCESS_MESSAGE = 'Botbooru is reachable, but this browser page is not allowed to read Botbooru responses directly. The extension will not fall back to the SillyTavern proxy because that can trigger SillyTavern Basic Auth prompts.';
 
 export const BOTBOORU_SORT_OPTIONS = {
     latest: 'Latest',
@@ -53,6 +54,10 @@ export function isCloudflareBlockError(error) {
         || /just a moment/i.test(error?.message || '');
 }
 
+export function isBrowserAccessError(error) {
+    return error?.code === 'BOTBOORU_BROWSER_ACCESS';
+}
+
 async function validateBotbooruResponse(response) {
     if (response.ok) return response;
 
@@ -81,12 +86,8 @@ async function fetchBotbooru(url, opts = {}) {
         return await validateBotbooruResponse(response);
     } catch (error) {
         if (error?.code) throw error;
-        // Cross-origin browser fetches usually fail before JS can read the response.
-        // Fall back to SillyTavern's proxy, where we can surface a useful error.
+        throw makeBotbooruError(BOTBOORU_BROWSER_ACCESS_MESSAGE, 'BOTBOORU_BROWSER_ACCESS');
     }
-
-    const response = await fetch(`/proxy/${encodeURIComponent(url)}`, opts);
-    return validateBotbooruResponse(response);
 }
 
 async function readBotbooruJson(response) {
